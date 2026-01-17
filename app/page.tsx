@@ -1,65 +1,244 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
+  const router = useRouter()
+  const [isAudioMuted, setIsAudioMuted] = useState(true)
+  const [isPlayingGuidance, setIsPlayingGuidance] = useState(false)
+  const [showWaveAnimation, setShowWaveAnimation] = useState(false)
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null)
+  const guidanceAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  // 初始化环境音效
+  useEffect(() => {
+    // 创建环境音效（白噪音/海浪声）
+    // 注意：实际使用时需要替换为真实的音频文件URL
+    ambientAudioRef.current = new Audio()
+    ambientAudioRef.current.loop = true
+    ambientAudioRef.current.volume = 0.3
+    // ambientAudioRef.current.src = '/audio/ambient-sea.mp3' // 需要添加音频文件
+
+    // 创建AI语音引导
+    guidanceAudioRef.current = new Audio()
+    guidanceAudioRef.current.volume = 0.7
+    // guidanceAudioRef.current.src = '/audio/guidance-voice.mp3' // 需要添加音频文件
+
+    return () => {
+      ambientAudioRef.current?.pause()
+      guidanceAudioRef.current?.pause()
+    }
+  }, [])
+
+  // 切换环境音效
+  const toggleAmbientAudio = () => {
+    if (!ambientAudioRef.current) return
+
+    if (isAudioMuted) {
+      ambientAudioRef.current.play().catch(console.error)
+      setIsAudioMuted(false)
+    } else {
+      ambientAudioRef.current.pause()
+      setIsAudioMuted(true)
+    }
+  }
+
+  // 处理录音按钮点击
+  const handleRecordClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    
+    // 延迟0.5秒播放AI语音引导
+    setTimeout(() => {
+      if (guidanceAudioRef.current) {
+        setIsPlayingGuidance(true)
+        setShowWaveAnimation(true)
+        
+        // 模拟播放（实际需要真实音频文件）
+        // guidanceAudioRef.current.play()
+        
+        // 模拟音频播放时长（3秒）
+        setTimeout(() => {
+          setIsPlayingGuidance(false)
+          setShowWaveAnimation(false)
+          // 跳转到录音页面
+          router.push('/record')
+        }, 3000)
+      } else {
+        router.push('/record')
+      }
+    }, 500)
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-purple-900 via-violet-900 to-indigo-950">
+      {/* 波浪背景装饰 */}
+      <div className="woice-wave-bg" />
+      
+      {/* 额外的光晕装饰 */}
+      <div className="absolute inset-0 z-0 opacity-20">
+        <div className="absolute top-1/4 left-[-10%] w-[50%] h-[50%] bg-violet-500 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-[-10%] w-[40%] h-[40%] bg-purple-500 rounded-full blur-[110px]"></div>
+      </div>
+
+      {/* Logo - 极简设计 */}
+      <div className="absolute top-8 left-8 z-20">
+        <div className="text-2xl font-bold tracking-tighter text-white">Woice</div>
+      </div>
+
+      {/* 极简导航 - 右上角 */}
+      <nav className="absolute top-8 right-8 z-20 flex items-center space-x-8 text-sm text-white/80">
+        <a href="#" className="hover:text-white transition-colors">探索</a>
+        <a href="#" className="hover:text-white transition-colors">关于</a>
+        <button
+          onClick={toggleAmbientAudio}
+          className="group relative flex items-center gap-2 transition-colors hover:text-white"
+          title={isAudioMuted ? '点击开启远方的呼唤' : '静音'}
+        >
+          {isAudioMuted ? (
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+              />
+            </svg>
+          ) : (
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+              />
+            </svg>
+          )}
+        </button>
+      </nav>
+
+      {/* 主要内容 */}
+      <main className="relative z-10 w-full max-w-4xl px-6 text-center">
+        {/* 主标题 */}
+        <h1 
+          className="mb-8 text-4xl md:text-6xl font-light text-white tracking-tight whitespace-nowrap"
+          style={{ 
+            animation: 'fade-in 0.8s ease-out forwards',
+            opacity: 0
+          }}
+        >
+          每段声音，都来自真实的人生瞬间
+        </h1>
+        
+        {/* 副标题 - 两行 */}
+        <div 
+          className="mb-12 text-xl md:text-2xl font-light text-white/90"
+          style={{ 
+            lineHeight: '1.8',
+            animation: 'fade-in 0.8s ease-out 0.2s forwards',
+            opacity: 0
+          }}
+        >
+          <p>我们讲述、倾听</p>
+          <p>在声音中，彼此照亮</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* 毛玻璃效果按钮组 */}
+        <div 
+          className="flex flex-col md:flex-row gap-4 justify-center"
+          style={{ 
+            animation: 'fade-in 0.8s ease-out 0.4s forwards',
+            opacity: 0
+          }}
+        >
+          {/* 主按钮 - 白色实心，紫色文字 */}
+          <Link
+            href="/record"
+            onClick={handleRecordClick}
+            className="px-8 py-4 bg-white text-purple-900 rounded-full font-semibold hover:bg-opacity-90 transition shadow-lg"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            分享一个瞬间
+          </Link>
+          
+          {/* 次按钮 - 毛玻璃效果 */}
+          <Link
+            href="/listen"
+            className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-full font-semibold text-white hover:bg-white/20 transition"
           >
-            Documentation
-          </a>
+            听听她们的声音
+          </Link>
         </div>
       </main>
+      
+      {/* 底部装饰 - 向下箭头 */}
+      <div className="absolute bottom-10 z-10 animate-bounce opacity-50">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+          <path d="M7 13l5 5 5-5M7 6l5 5 5-5" />
+        </svg>
+      </div>
+
+      {/* 底部波浪动画 - AI语音引导时显示 */}
+      {showWaveAnimation && (
+        <div className="absolute bottom-0 left-0 right-0 h-32 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 flex items-end justify-center gap-1">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="w-1 bg-slate-400/30 rounded-t"
+                style={{
+                  height: `${20 + Math.sin(i * 0.5) * 15}px`,
+                  animation: `wave 1.5s ease-in-out infinite`,
+                  animationDelay: `${i * 0.05}s`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.8s ease-out forwards;
+          opacity: 0;
+        }
+
+        @keyframes wave {
+          0%, 100% {
+            transform: scaleY(1);
+          }
+          50% {
+            transform: scaleY(1.5);
+          }
+        }
+      `}</style>
     </div>
-  );
+  )
 }

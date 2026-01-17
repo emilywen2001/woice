@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model SoundEntry {
+  id           String   @id @default(uuid())
+  audioUrl     String
+  voiceMode    String   // 'original' | 'masked'
+  locationLevel String  // 'none' | 'country' | 'province' | 'city'
+  locationText String?
+  situation    String   // 'first_try' | 'career' | 'identity' | 'uncertain'
+  summary      String   // AI 一句话摘要
+  tagsTheme    String   // JSON string array
+  tagsStage    String   // JSON string array
+  tagsEmotion  String   // JSON string array
+  createdAt    DateTime @default(now())
+  ownerToken   String   // 用于删除权限（无登录）
+  
+  responses    Response[]
+  
+  @@index([situation])
+  @@index([createdAt])
+}
+
+model Response {
+  id        String     @id @default(uuid())
+  entryId   String
+  intent    String     // 'resonate' | 'support' | 'companion' | 'thanks'
+  text      String?    // ≤50 字
+  createdAt DateTime   @default(now())
+  
+  entry     SoundEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  
+  @@index([entryId])
+}
