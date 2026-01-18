@@ -13,13 +13,6 @@ interface AIGeneratedCard {
 }
 
 // 常量定义在组件外部，避免重复创建
-const locationTexts = {
-  none: null,
-  country: '东亚·一线城市',
-  province: '华东·新一线城市',
-  city: '华南·二线城市',
-} as const
-
 const situationLabels = {
   first_try: '第一次尝试',
   career: '职业犹豫',
@@ -27,13 +20,50 @@ const situationLabels = {
   uncertain: '不确定未来',
 } as const
 
+// 国家-省份-地级市三级数据结构
+const locationData: Record<string, Record<string, string[]>> = {
+  中国: {
+    北京: ['北京市'],
+    上海: ['上海市'],
+    天津: ['天津市'],
+    重庆: ['重庆市'],
+    广东: ['广州市', '深圳市', '东莞市', '佛山市', '珠海市', '中山市', '惠州市', '江门市', '湛江市', '茂名市', '肇庆市', '梅州市', '汕尾市', '河源市', '阳江市', '清远市', '潮州市', '揭阳市', '云浮市'],
+    江苏: ['南京市', '苏州市', '无锡市', '常州市', '镇江市', '扬州市', '泰州市', '南通市', '盐城市', '淮安市', '宿迁市', '徐州市', '连云港市'],
+    浙江: ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市', '绍兴市', '金华市', '衢州市', '舟山市', '台州市', '丽水市'],
+    山东: ['济南市', '青岛市', '淄博市', '枣庄市', '东营市', '烟台市', '潍坊市', '济宁市', '泰安市', '威海市', '日照市', '临沂市', '德州市', '聊城市', '滨州市', '菏泽市'],
+    河南: ['郑州市', '开封市', '洛阳市', '平顶山市', '安阳市', '鹤壁市', '新乡市', '焦作市', '濮阳市', '许昌市', '漯河市', '三门峡市', '南阳市', '商丘市', '信阳市', '周口市', '驻马店市'],
+    四川: ['成都市', '自贡市', '攀枝花市', '泸州市', '德阳市', '绵阳市', '广元市', '遂宁市', '内江市', '乐山市', '南充市', '眉山市', '宜宾市', '广安市', '达州市', '雅安市', '巴中市', '资阳市'],
+    湖北: ['武汉市', '黄石市', '十堰市', '宜昌市', '襄阳市', '鄂州市', '荆门市', '孝感市', '荆州市', '黄冈市', '咸宁市', '随州市'],
+    湖南: ['长沙市', '株洲市', '湘潭市', '衡阳市', '邵阳市', '岳阳市', '常德市', '张家界市', '益阳市', '郴州市', '永州市', '怀化市', '娄底市'],
+    安徽: ['合肥市', '芜湖市', '蚌埠市', '淮南市', '马鞍山市', '淮北市', '铜陵市', '安庆市', '黄山市', '滁州市', '阜阳市', '宿州市', '六安市', '亳州市', '池州市', '宣城市'],
+    福建: ['福州市', '厦门市', '莆田市', '三明市', '泉州市', '漳州市', '南平市', '龙岩市', '宁德市'],
+    辽宁: ['沈阳市', '大连市', '鞍山市', '抚顺市', '本溪市', '丹东市', '锦州市', '营口市', '阜新市', '辽阳市', '盘锦市', '铁岭市', '朝阳市', '葫芦岛市'],
+    黑龙江: ['哈尔滨市', '齐齐哈尔市', '鸡西市', '鹤岗市', '双鸭山市', '大庆市', '伊春市', '佳木斯市', '七台河市', '牡丹江市', '黑河市', '绥化市'],
+    吉林: ['长春市', '吉林市', '四平市', '辽源市', '通化市', '白山市', '松原市', '白城市'],
+    河北: ['石家庄市', '唐山市', '秦皇岛市', '邯郸市', '邢台市', '保定市', '张家口市', '承德市', '沧州市', '廊坊市', '衡水市'],
+    山西: ['太原市', '大同市', '阳泉市', '长治市', '晋城市', '朔州市', '晋中市', '运城市', '忻州市', '临汾市', '吕梁市'],
+    江西: ['南昌市', '景德镇市', '萍乡市', '九江市', '新余市', '鹰潭市', '赣州市', '吉安市', '宜春市', '抚州市', '上饶市'],
+    陕西: ['西安市', '铜川市', '宝鸡市', '咸阳市', '渭南市', '延安市', '汉中市', '榆林市', '安康市', '商洛市'],
+    云南: ['昆明市', '曲靖市', '玉溪市', '保山市', '昭通市', '丽江市', '普洱市', '临沧市'],
+    贵州: ['贵阳市', '六盘水市', '遵义市', '安顺市', '毕节市', '铜仁市'],
+    海南: ['海口市', '三亚市', '三沙市', '儋州市'],
+    甘肃: ['兰州市', '嘉峪关市', '金昌市', '白银市', '天水市', '武威市', '张掖市', '平凉市', '酒泉市', '庆阳市', '定西市', '陇南市'],
+    青海: ['西宁市', '海东市'],
+    宁夏: ['银川市', '石嘴山市', '吴忠市', '固原市', '中卫市'],
+    内蒙古: ['呼和浩特市', '包头市', '乌海市', '赤峰市', '通辽市', '鄂尔多斯市', '呼伦贝尔市', '巴彦淖尔市', '乌兰察布市'],
+    新疆: ['乌鲁木齐市', '克拉玛依市', '吐鲁番市', '哈密市'],
+    西藏: ['拉萨市', '日喀则市', '昌都市', '林芝市', '山南市', '那曲市', '阿里地区'],
+  },
+}
+
 export default function PublishPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const audioUrl = searchParams.get('audioUrl') || '/uploads/demo-audio.webm'
   
-  const [locationLevel, setLocationLevel] = useState<'none' | 'country' | 'province' | 'city'>('country')
-  const [voiceMode, setVoiceMode] = useState<'original' | 'masked'>('masked')
+  const [selectedCountry, setSelectedCountry] = useState<string>('')
+  const [selectedProvince, setSelectedProvince] = useState<string>('')
+  const [selectedCity, setSelectedCity] = useState<string>('')
   const [situation, setSituation] = useState<'first_try' | 'career' | 'identity' | 'uncertain'>('first_try')
   const [isPublishing, setIsPublishing] = useState(false)
   const [aiCard, setAiCard] = useState<AIGeneratedCard | null>(null)
@@ -86,6 +116,10 @@ export default function PublishPage() {
       // 使用上传的音频URL或示例音频
       const finalAudioUrl = audioUrl
 
+      const locationText = selectedCountry && selectedProvince && selectedCity 
+        ? `${selectedCountry}·${selectedProvince}·${selectedCity}` 
+        : null
+
       const response = await fetch('/api/entries', {
         method: 'POST',
         headers: {
@@ -93,9 +127,9 @@ export default function PublishPage() {
         },
         body: JSON.stringify({
           audioUrl: finalAudioUrl,
-          voiceMode,
-          locationLevel,
-          locationText: locationTexts[locationLevel],
+          voiceMode: 'original', // 默认原声，不再显示选项
+          locationLevel: selectedCity ? 'city' : 'none',
+          locationText,
           situation,
           // 如果AI已生成卡片，使用AI生成的内容；否则让后端重新生成
           aiSummary: aiCard?.summary,
@@ -197,51 +231,69 @@ export default function PublishPage() {
         <div className="mb-8 space-y-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 p-6 shadow-2xl">
           <div>
             <label className="mb-3 block text-sm font-semibold tracking-wide">
-              声音模式
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center cursor-pointer group">
-                <input
-                  type="radio"
-                  value="masked"
-                  checked={voiceMode === 'masked'}
-                  onChange={(e) => setVoiceMode(e.target.value as 'masked')}
-                  className="mr-2 accent-purple-500"
-                />
-                <span className="group-hover:opacity-100 opacity-90 transition">变声</span>
-              </label>
-              <label className="flex items-center cursor-pointer group">
-                <input
-                  type="radio"
-                  value="original"
-                  checked={voiceMode === 'original'}
-                  onChange={(e) => setVoiceMode(e.target.value as 'original')}
-                  className="mr-2 accent-purple-500"
-                />
-                <span className="group-hover:opacity-100 opacity-90 transition">原声</span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-3 block text-sm font-semibold tracking-wide">
               地点信息（可选）
             </label>
-            <select
-              value={locationLevel}
-              onChange={(e) => setLocationLevel(e.target.value as typeof locationLevel)}
-              className="w-full rounded-lg border border-white/30 bg-white/10 backdrop-blur-sm px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="none" className="bg-slate-900">不显示</option>
-              <option value="country" className="bg-slate-900">国家/大区</option>
-              <option value="province" className="bg-slate-900">省/城市</option>
-              <option value="city" className="bg-slate-900">城市</option>
-            </select>
-            {locationLevel !== 'none' && (
-              <p className="mt-2 text-sm opacity-70">
-                将显示为：{locationTexts[locationLevel]}
-              </p>
-            )}
+            <div className="space-y-4">
+              {/* 国家选择 */}
+              <select
+                value={selectedCountry}
+                onChange={(e) => {
+                  setSelectedCountry(e.target.value)
+                  setSelectedProvince('')
+                  setSelectedCity('')
+                }}
+                className="w-full rounded-lg border border-white/30 bg-white/10 backdrop-blur-sm px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="" className="bg-slate-900">不显示</option>
+                {Object.keys(locationData).map((country) => (
+                  <option key={country} value={country} className="bg-slate-900">
+                    {country}
+                  </option>
+                ))}
+              </select>
+
+              {/* 省份选择 */}
+              {selectedCountry && (
+                <select
+                  value={selectedProvince}
+                  onChange={(e) => {
+                    setSelectedProvince(e.target.value)
+                    setSelectedCity('')
+                  }}
+                  className="w-full rounded-lg border border-white/30 bg-white/10 backdrop-blur-sm px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="" className="bg-slate-900">请选择省份</option>
+                  {selectedCountry && Object.keys(locationData[selectedCountry] || {}).map((province) => (
+                    <option key={province} value={province} className="bg-slate-900">
+                      {province}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* 地级市选择 */}
+              {selectedCountry && selectedProvince && (
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full rounded-lg border border-white/30 bg-white/10 backdrop-blur-sm px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="" className="bg-slate-900">请选择地级市</option>
+                  {selectedCountry && selectedProvince && (locationData[selectedCountry]?.[selectedProvince] || []).map((city) => (
+                    <option key={city} value={city} className="bg-slate-900">
+                      {city}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* 显示预览 */}
+              {selectedCountry && selectedProvince && selectedCity && (
+                <p className="mt-2 text-sm opacity-70">
+                  将显示为：{selectedCountry}·{selectedProvince}·{selectedCity}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

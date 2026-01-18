@@ -34,7 +34,7 @@ export async function GET(
       tagsStage: JSON.parse(entry.tagsStage),
       tagsEmotion: JSON.parse(entry.tagsEmotion),
       createdAt: entry.createdAt,
-      responses: entry.responses.map((r) => ({
+      responses: entry.responses.map((r: { id: string; intent: string; text: string | null; createdAt: Date }) => ({
         id: r.id,
         intent: r.intent,
         text: r.text,

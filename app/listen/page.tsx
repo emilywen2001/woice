@@ -58,6 +58,7 @@ export default function ListenPage() {
   const [matchedEntries, setMatchedEntries] = useState<MatchedEntry[]>([])
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [queryKeywords, setQueryKeywords] = useState<string[]>([])
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -97,6 +98,19 @@ export default function ListenPage() {
       }
     }
     fetchAllEntries()
+  }, [])
+
+  // 从 localStorage 加载收藏状态
+  useEffect(() => {
+    try {
+      const savedFavorites = localStorage.getItem('woice-favorites')
+      if (savedFavorites) {
+        const favoriteIds = JSON.parse(savedFavorites) as string[]
+        setFavorites(new Set(favoriteIds))
+      }
+    } catch (error) {
+      console.error('加载收藏状态失败:', error)
+    }
   }, [])
 
   // 自动滚动到底部
@@ -205,6 +219,26 @@ export default function ListenPage() {
     setSelectedEntryId(entryId)
   }
 
+  const handleToggleFavorite = (entryId: string) => {
+    setFavorites((prev) => {
+      const newFavorites = new Set(prev)
+      if (newFavorites.has(entryId)) {
+        newFavorites.delete(entryId)
+      } else {
+        newFavorites.add(entryId)
+      }
+      
+      // 保存到 localStorage
+      try {
+        localStorage.setItem('woice-favorites', JSON.stringify(Array.from(newFavorites)))
+      } catch (error) {
+        console.error('保存收藏状态失败:', error)
+      }
+      
+      return newFavorites
+    })
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-purple-900 via-violet-900 to-indigo-950">
       {/* 左侧：Chatbot界面 */}
@@ -273,24 +307,53 @@ export default function ListenPage() {
                     <h3 className="text-xs font-medium text-white">
                       {entry.location.city}
                     </h3>
-                    {/* 播放按钮 */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        // TODO: 实现音频播放功能
-                        console.log('播放音频:', entry.id)
-                      }}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-purple-900 transition-colors hover:bg-white/90 shadow-md"
-                      title="播放语音"
-                    >
-                      <svg
-                        className="h-3 w-3"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
+                    <div className="flex gap-2">
+                      {/* 收藏按钮 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleFavorite(entry.id)
+                        }}
+                        className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors shadow-md ${
+                          favorites.has(entry.id)
+                            ? 'bg-violet-500 text-white hover:bg-violet-600'
+                            : 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
+                        }`}
+                        title={favorites.has(entry.id) ? '取消收藏' : '收藏'}
                       >
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                      </svg>
-                    </button>
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill={favorites.has(entry.id) ? 'currentColor' : 'none'}
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          />
+                        </svg>
+                      </button>
+                      {/* 播放按钮 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          // TODO: 实现音频播放功能
+                          console.log('播放音频:', entry.id)
+                        }}
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-purple-900 transition-colors hover:bg-white/90 shadow-md"
+                        title="播放语音"
+                      >
+                        <svg
+                          className="h-3 w-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-white/90">
                     {entry.ai_summary}

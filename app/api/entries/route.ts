@@ -22,7 +22,19 @@ export async function GET(request: NextRequest) {
     })
 
     // 不返回热度信息，只返回基本数据
-    const result = entries.map((entry) => ({
+    const result = entries.map((entry: {
+      id: string;
+      audioUrl: string;
+      voiceMode: string;
+      locationLevel: string;
+      locationText: string | null;
+      situation: string;
+      summary: string;
+      tagsTheme: string;
+      tagsStage: string;
+      tagsEmotion: string;
+      createdAt: Date;
+    }) => ({
       id: entry.id,
       audioUrl: entry.audioUrl,
       voiceMode: entry.voiceMode,
